@@ -1,8 +1,6 @@
 #include "minicrt.h"
 
-#ifdef WIN32
 #include <Windows.h>
-#endif
 
 static void crt_fatal_error(const char *msg)
 {
@@ -14,7 +12,6 @@ void mini_crt_entry(void)
 {
     int ret;
 
-#ifdef WIN32
     int flag = 0;
     int argc = 0;
     char *argv[16];
@@ -44,15 +41,6 @@ void mini_crt_entry(void)
             flag = 0;
         }
     }
-#else
-    int argc;
-    char **argv;
-
-    asm("movl %%ebp, %0 \n"
-        : "=r"(ebp_reg));
-    argc = *(int *)(ebp_reg + 4);
-    argv = (char **)(ebp_reg + 8);
-#endif
 
     if (!mini_crt_heap_init())
         crt_fatal_error("heap initialize failed");
@@ -68,12 +56,5 @@ void exit(int exitcode)
 {
     mini_crt_call_exit_routine();
 
-#ifdef WIN32
     ExitProcess(exitcode);
-#else
-    asm("movl %0,%%ebx \n\t"
-        "movl $1,%%eax \n\t"
-        "int $0x80 \n\t"
-        "hlt \n\t" ::"m"(exitcode));
-#endif
 }

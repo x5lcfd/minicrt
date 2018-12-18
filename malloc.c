@@ -1,5 +1,7 @@
 #include "minicrt.h"
 
+#include <Windows.h>
+
 typedef struct _heap_header
 {
     enum
@@ -74,6 +76,32 @@ void *malloc(unsigned int size)
             header->next = next;
             header->next = size + HEADER_SIZE;
             header->type = HEAP_BLOCK_USED;
+            return ADDR_ADD(header, HEADER_SIZE);
         }
+
+        header = header->next;
     }
+
+    return NULL;
+}
+
+int mini_crt_heap_init()
+{
+    void *base = NULL;
+    heap_header *header = NULL;
+    unsigned heap_size = 1024 * 1024 * 32;
+
+    base = VirtualAlloc(0, heap_size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    if (base == NULL)
+        return 0;
+
+    header = (heap_header *)base;
+
+    header->size = heap_size;
+    header->type = HEAP_BLOCK_FREE;
+    header->next = NULL;
+    header->prev = NULL;
+
+    list_head = header;
+    return 1;
 }
